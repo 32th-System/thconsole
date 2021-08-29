@@ -35,6 +35,18 @@
 			"eip_jump_dist": "0x1B3",
 			"addr": "Rx49420",
 			"lua_cond": "invincibility"
+		},
+		"thconsole_skip_code#inf_lives": {
+			"cave_exec": false,
+			"lua_cond": "inf_lives",
+			"cavesize": 6,
+			"addr": "Rx4921b"
+		},
+		"thconsole_skip_code#inf_bombs": {
+			"cave_exec": false,
+			"lua_cond": "inf_bombs",
+			"cavesize": 6,
+			"addr": "Rx11CAB"
 		}
 	}
 }
