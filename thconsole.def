@@ -4,3 +4,5 @@ EXPORTS
 	BP_thconsole_toggle
 	thconsole_ui_mod_detour
 	thcrap_plugin_init
+
+	BP_thconsole_skip_code

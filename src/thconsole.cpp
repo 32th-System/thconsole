@@ -12,6 +12,37 @@ int lua_skip_stage(lua_State* L) {
 	return 0;
 }
 
+int BP_thconsole_skip_code(x86_reg_t* regs, json_t* bp_info) {
+	lua_getglobal(lua_state, json_object_get_string(bp_info, "lua_cond"));
+	bool cond = lua_toboolean(lua_state, -1);
+	lua_pop(lua_state, 1);
+	if (!cond) {
+		return 1;
+	}
+
+	regs->retaddr += json_object_get_immediate(bp_info, regs, "eip_jump_dist");
+	regs->esp += json_object_get_immediate(bp_info, regs, "stack_clear_size");
+
+	json_t* obj = NULL;
+
+#define SET_REG(r) \
+	if(obj = json_object_get(bp_info, #r)) \
+		regs->r = json_immediate_value(obj, regs)
+
+	SET_REG(eax);
+	SET_REG(ebx);
+	SET_REG(ecx);
+	SET_REG(edx);
+	SET_REG(ebp);
+	SET_REG(esi);
+	SET_REG(edi);
+	SET_REG(eflags);
+
+#undef SET_REG
+
+	return breakpoint_cave_exec_flag(bp_info);
+}
+
 const char* exec_command(const char* cmd) {
 	luaL_dostring(lua_state, cmd);
 	int stack_size = lua_gettop(lua_state);

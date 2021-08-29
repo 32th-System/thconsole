@@ -28,6 +28,13 @@
 		"thconsole_lock_input": {
 			"cavesize": 5,
 			"addr": "Rx40f89"
+		},
+		"thconsole_skip_code#invincibility": {
+			"cave_exec": false,
+			"cavesize": 6,
+			"eip_jump_dist": "0x1B3",
+			"addr": "Rx49420",
+			"lua_cond": "invincibility"
 		}
 	}
 }
