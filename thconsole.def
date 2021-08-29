@@ -1,0 +1,6 @@
+EXPORTS
+	BP_thconsole_lock_input
+	BP_thconsole_ui_init
+	BP_thconsole_toggle
+	thconsole_ui_mod_detour
+	thcrap_plugin_init
