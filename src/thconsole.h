@@ -1,3 +1,4 @@
+#define INCLUDE_LONG_DOUBLE_CONSTRUCTORS
 #include <thcrap.h>
 #include <lua/include/lua.hpp>
 #include <imgui/imgui.h>

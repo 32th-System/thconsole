@@ -6,9 +6,165 @@ lua_State* lua_state;
 typedef void stage_end_t();
 stage_end_t* stage_end;
 
+patch_value_type_t parse_tname(const char* tname) {
+	switch (const uint8_t type_char = tname[0] | 0x20) {
+		case 'i': {
+			switch (strtol(tname + 1, nullptr, 10)) {
+			case 8:
+				return PVT_SBYTE;
+			case 16:
+				return PVT_SWORD;
+			case 32:
+				return PVT_SDWORD;
+			case 64:
+				return PVT_SQWORD;
+			}
+			break;
+		}
+		case 'b': case 'u': {
+			switch (strtol(tname + 1, nullptr, 10)) {
+			case 8:
+				return PVT_BYTE;
+			case 16:
+				return PVT_WORD;
+			case 32:
+				return PVT_DWORD;
+			case 64:
+				return PVT_QWORD;
+			}
+			break;
+		}
+		case 'f': {
+			switch (strtol(tname + 1, nullptr, 10)) {
+			case 32:
+				return PVT_FLOAT;
+			case 64:
+				return PVT_DOUBLE;
+			case 80:
+				return PVT_LONGDOUBLE;
+			}
+			break;
+		}
+	}
+	return PVT_UNKNOWN;
+}
 
 int lua_skip_stage(lua_State* L) {
 	stage_end();
+	return 0;
+}
+
+template<typename T>
+T __forceinline peek(uintptr_t addr) {
+	return *(T*)addr;
+}
+
+template<typename T>
+void __forceinline poke(uintptr_t addr, T val) {
+	*(T*)addr = val;
+}
+
+int lua_peek(lua_State* L) {
+	if (lua_gettop(L) != 2) {
+		lua_pushstring(L, "peek: wrong number of arguments");
+		return 1;
+	}
+
+	uintptr_t addr = lua_tointeger(L, 1);
+
+	if (addr <= 0xFFFF || addr > 0x7FFFFFFF) { // Windows be like
+		lua_pushstring(L, "peek: address in invalid range");
+		return 1;
+	}
+
+	switch(parse_tname(lua_tostring(L, 2))) {
+	case PVT_BYTE:
+		lua_pushinteger(L, peek<uint8_t>(addr));
+		break;
+	case PVT_WORD:
+		lua_pushinteger(L, peek<uint16_t>(addr));
+		break;
+	case PVT_DWORD:
+		lua_pushinteger(L, peek<uint32_t>(addr));
+		break;
+	case PVT_QWORD:
+		lua_pushinteger(L, peek<uint64_t>(addr));
+		break;
+	case PVT_SBYTE:
+		lua_pushinteger(L, peek<int8_t>(addr));
+		break;
+	case PVT_SWORD:
+		lua_pushinteger(L, peek<int16_t>(addr));
+		break;
+	case PVT_SDWORD:
+		lua_pushinteger(L, peek<int32_t>(addr));
+		break;
+	case PVT_SQWORD:
+		lua_pushinteger(L, peek<int64_t>(addr));
+		break;
+	case PVT_FLOAT:
+		lua_pushnumber(L, peek<float>(addr));
+		break;
+	case PVT_DOUBLE:
+		lua_pushnumber(L, peek<double>(addr));
+		break;
+	case PVT_LONGDOUBLE:
+		lua_pushnumber(L, peek<LongDouble80>(addr));
+	}
+	return 1;
+}
+
+int lua_poke(lua_State * L) {
+	if (lua_gettop(L) != 3) {
+		lua_pushstring(L, "poke: wrong number of arguments");
+		return 1;
+	}
+
+	uintptr_t addr = lua_tointeger(L, 1);
+
+	if (addr <= 0xFFFF || addr > 0x7FFFFFFF) { // Windows be like
+		lua_pushstring(L, "poke: address in invalid range");
+		return 1;
+	}
+
+	switch (parse_tname(lua_tostring(L, 2))) {
+	case PVT_BYTE:
+		poke(addr, (uint8_t)lua_tointeger(L, 3));
+		break;
+	case PVT_WORD:
+		poke(addr, (uint16_t)lua_tointeger(L, 3));
+		break;
+	case PVT_DWORD:
+		poke(addr, (uint32_t)lua_tointeger(L, 3));
+		break;
+	case PVT_QWORD:
+		poke(addr, (uint64_t)lua_tointeger(L, 3));
+		break;
+	case PVT_SBYTE:
+		poke(addr, (int8_t)lua_tointeger(L, 3));
+		break;
+	case PVT_SWORD:
+		poke(addr, (int16_t)lua_tointeger(L, 3));
+		break;
+	case PVT_SDWORD:
+		poke(addr, (int32_t)lua_tointeger(L, 3));
+		break;
+	case PVT_SQWORD:
+		poke(addr, (int64_t)lua_tointeger(L, 3));
+		break;
+	case PVT_FLOAT:
+		poke(addr, (float)lua_tonumber(L, 3));
+		break;
+	case PVT_DOUBLE:
+		poke(addr, (double)lua_tonumber(L, 3));
+		break;
+	case PVT_LONGDOUBLE:
+		poke(addr, (LongDouble80)lua_tonumber(L, 3));
+		break;
+	case PVT_UNKNOWN:
+		lua_pushstring(L, "poke: invalid type");
+		return 1;
+	}
 	return 0;
 }
 
@@ -75,6 +231,9 @@ int TH_STDCALL thcrap_plugin_init() {
 
 	lua_state = luaL_newstate();
 	luaL_openlibs(lua_state);
+
+	lua_register(lua_state, "peek", lua_peek);
+	lua_register(lua_state, "poke", lua_poke);
 
 	lua_register(lua_state, "skip_stage", lua_skip_stage);
 
