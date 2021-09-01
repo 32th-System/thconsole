@@ -215,7 +215,10 @@ int BP_thconsole_skip_code(x86_reg_t* regs, json_t* bp_info) {
 }
 
 const char* exec_command(const char* cmd) {
-	luaL_dostring(lua_state, cmd);
+	std::string cmd_real = "return ";
+	cmd_real.append(cmd);
+
+	luaL_dostring(lua_state, cmd_real.c_str());
 	int stack_size = lua_gettop(lua_state);
 
 	if (stack_size) {
