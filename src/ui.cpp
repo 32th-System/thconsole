@@ -283,7 +283,6 @@ int BP_thconsole_lock_input(x86_reg_t* regs, json_t* bp_info) {
 int BP_thconsole_toggle(x86_reg_t* regs, json_t* bp_info) {
     if (json_object_get_immediate(bp_info, regs, "toggle")) {
         console_open = true;
-        console.AddLog("Toggled console!");
     }
     return breakpoint_cave_exec_flag(bp_info);
 }
@@ -294,8 +293,6 @@ int BP_thconsole_ui_init(x86_reg_t* regs, json_t* bp_info) {
 
 	hwnd = (HWND)json_object_get_immediate(bp_info, regs, "hwnd");
 	d3ddevice = (LPDIRECT3DDEVICE9)json_object_get_immediate(bp_info, regs, "d3ddevice");
-	//texture = (LPDIRECT3DTEXTURE9)json_object_get_immediate(bp_info, regs, "texture");
-	//orig_Present = (IDirect3DDevice9_Present_t*)&d3ddevice->Present;
 	vtable_detour_t det[] = {
 		{17, (void*)hook_Present, (void**)&orig_Present}
 	};
