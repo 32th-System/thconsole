@@ -77,7 +77,16 @@ int lua_peek(lua_State* L) {
 		return 1;
 	}
 
-	switch(parse_tname(lua_tostring(L, 2))) {
+	const char* tname = lua_tostring(L, 2); 
+
+	switch(parse_tname(tname)) {
+	case PVT_UNKNOWN:
+		{
+			std::string error = "peek: unknown type ";
+			error.append(tname);
+			lua_pushstring(L, error.c_str());
+		}
+		break;
 	case PVT_BYTE:
 		lua_pushinteger(L, peek<uint8_t>(addr));
 		break;
@@ -110,6 +119,7 @@ int lua_peek(lua_State* L) {
 		break;
 	case PVT_LONGDOUBLE:
 		lua_pushnumber(L, peek<LongDouble80>(addr));
+		break;
 	}
 	return 1;
 }
@@ -127,7 +137,15 @@ int lua_poke(lua_State * L) {
 		return 1;
 	}
 
-	switch (parse_tname(lua_tostring(L, 2))) {
+	const char* tname = lua_tostring(L, 2);
+	switch (parse_tname(tname)) {
+	case PVT_UNKNOWN:
+	{
+		std::string error = "peek: unknown type ";
+		error.append(tname);
+		lua_pushstring(L, error.c_str());
+	}
+	break;
 	case PVT_BYTE:
 		poke(addr, (uint8_t)lua_tointeger(L, 3));
 		break;
@@ -161,9 +179,6 @@ int lua_poke(lua_State * L) {
 	case PVT_LONGDOUBLE:
 		poke(addr, (LongDouble80)lua_tonumber(L, 3));
 		break;
-	case PVT_UNKNOWN:
-		lua_pushstring(L, "poke: invalid type");
-		return 1;
 	}
 	return 0;
 }
